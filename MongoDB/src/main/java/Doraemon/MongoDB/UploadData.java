@@ -19,7 +19,8 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
 /**
- * create database and upload
+ * create database and upload.
+ * data format: <mid, id, embedding>
  *
  */
 public class UploadData {
