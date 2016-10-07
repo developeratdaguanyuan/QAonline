@@ -1,10 +1,7 @@
 package Doraemon.MongoDB;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
@@ -24,10 +21,10 @@ import com.mongodb.client.MongoDatabase;
  *
  */
 public class UploadData {
-  public static String ENTITY_EMBEDDING = "./data/entity_embedding";
-  public static String RELATION_EMBEDDING = "./data/relation_embedding";
+  public static String ENTITY_EMBEDDING = "./data/entity_embedding.txt";
+  //public static String RELATION_EMBEDDING = "./data/relation_embedding";
   public static String ENTITY_MAP = "./data/FB5M-entity-id.txt";
-  public static String RELATION_MAP = "./data/FB5M-relation-id.txt";
+  //public static String RELATION_MAP = "./data/FB5M-relation-id.txt";
   
   public static Map<Integer, String> entity_id_map = new HashMap<Integer, String>();
   public static Map<Integer, String> relation_id_map = new HashMap<Integer, String>();
@@ -57,22 +54,26 @@ public class UploadData {
         collection = mongoDatabase.getCollection(ct_name);
       }
 
+      List<Double> array = new LinkedList<Double>();
       File file = new File(embed_file_path);
-      FileInputStream fin = new FileInputStream(file);
-      BufferedInputStream bin = new BufferedInputStream(fin);
-      DataInputStream din = new DataInputStream(bin);
-      int count = (int) (file.length() / 4);
-      for (int i = 0; i < count / 256; i++) {
-        System.out.println(i);
-        List<Double> array = new LinkedList<Double>();
-        for (int j = 0; j < 256; j++) {
-          array.add((double)din.readFloat());
+      BufferedReader reader = new BufferedReader(new FileReader(file));
+      int i = 0;
+      String line = null;
+      while ((line = reader.readLine()) != null) {
+        array.add(Double.valueOf(line.trim()));
+        if (array.size() == 256) {
+          if (entity_id_map.containsKey(i)) {
+            Document document = new Document("mid", entity_id_map.get(i));
+            document.append("id", i);
+            document.append("embedding", array);
+            collection.insertOne(document);
+          }
+          ++i;
+          array.clear();
         }
-        Document document = new Document("mid", entity_id_map.get(i + 1));
-        document.append("id", i + 1);
-        document.append("embedding", array);
-        collection.insertOne(document);
       }
+      
+      reader.close();
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
     }
@@ -80,6 +81,6 @@ public class UploadData {
   
   public static void main(String[] args) throws IOException {
     loadDict(ENTITY_MAP, entity_id_map);
-    updateFreebaseEmbedding("test", "collection", ENTITY_EMBEDDING);
+    updateFreebaseEmbedding("freebase", "entityEmbedding", ENTITY_EMBEDDING);
   }
 }
