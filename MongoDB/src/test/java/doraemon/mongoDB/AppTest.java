@@ -1,4 +1,4 @@
-package Doraemon.MongoDB;
+package doraemon.mongoDB;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
