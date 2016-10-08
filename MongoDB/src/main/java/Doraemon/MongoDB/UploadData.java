@@ -21,10 +21,10 @@ import com.mongodb.client.MongoDatabase;
  *
  */
 public class UploadData {
-  public static String ENTITY_EMBEDDING = "./data/entity_embedding.txt";
-  //public static String RELATION_EMBEDDING = "./data/relation_embedding";
-  public static String ENTITY_MAP = "./data/FB5M-entity-id.txt";
-  //public static String RELATION_MAP = "./data/FB5M-relation-id.txt";
+  private static String ENTITY_EMBEDDING = "./data/entity_embedding.txt";
+  private static String RELATION_EMBEDDING = "./data/relation_embedding.txt";
+  private static String ENTITY_MAP = "./data/FB5M-entity-id.txt";
+  public static String RELATION_MAP = "./data/FB5M-relation-id.txt";
   
   public static Map<Integer, String> entity_id_map = new HashMap<Integer, String>();
   public static Map<Integer, String> relation_id_map = new HashMap<Integer, String>();
@@ -43,7 +43,7 @@ public class UploadData {
   }
   
   public static void updateFreebaseEmbedding(
-      String db_name, String ct_name, String embed_file_path) {
+      String db_name, String ct_name, String embed_file_path, Map<Integer, String> id_map) {
     try {
       MongoClient mongoClient = new MongoClient("localhost", 27017);
 
@@ -62,8 +62,8 @@ public class UploadData {
       while ((line = reader.readLine()) != null) {
         array.add(Double.valueOf(line.trim()));
         if (array.size() == 256) {
-          if (entity_id_map.containsKey(i)) {
-            Document document = new Document("mid", entity_id_map.get(i));
+          if (id_map.containsKey(i)) {
+            Document document = new Document("mid", id_map.get(i));
             document.append("id", i);
             document.append("embedding", array);
             collection.insertOne(document);
@@ -81,6 +81,8 @@ public class UploadData {
   
   public static void main(String[] args) throws IOException {
     loadDict(ENTITY_MAP, entity_id_map);
-    updateFreebaseEmbedding("freebase", "entityEmbedding", ENTITY_EMBEDDING);
+    loadDict(RELATION_MAP, relation_id_map);
+    updateFreebaseEmbedding("freebase", "entityEmbedding", ENTITY_EMBEDDING, entity_id_map);
+    updateFreebaseEmbedding("freebase", "relationEmbedding", RELATION_EMBEDDING, relation_id_map);
   }
 }
