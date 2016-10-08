@@ -1,1 +1,1 @@
-mvn exec:java -Dexec.mainClass="Doraemon.MongoDB.UploadData"
+mvn exec:java -Dexec.mainClass="doraemon.mongoDB.UploadData"

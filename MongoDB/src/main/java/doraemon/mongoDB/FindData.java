@@ -1,4 +1,4 @@
-package Doraemon.MongoDB;
+package doraemon.mongoDB;
 
 import java.util.List;
 
@@ -25,22 +25,35 @@ public class FindData {
     return true;
   }
   
-  public static List<Double> findData(String ct_name, int id) {
+  public static Data findData(String ct_name, int id) {
     MongoCollection<Document> collection = mongoDatabase.getCollection(ct_name);
     if (collection == null) {
       return null;
     }
     
     FindIterable<Document> iterable = collection.find(new Document("id", id));
-    return (List<Double>)iterable.first().get("embedding");
+    if(iterable.first() == null) {
+      return null;
+    }
+    
+    Data result = new Data();
+    result.setId(id);
+    result.setMid((String)iterable.first().get("mid"));
+    result.setEmbedding((List<Double>)iterable.first().get("embedding"));
+    return result;
   }
   
   public static void main(String[] args) {
-    connectDB("test");
-    List<Double> result = findData("collection", 3);
-    for (Double val : result) {
-      System.out.println(val + " ");
+    connectDB("freebase");
+    Data result = findData("entityEmbedding", 0);
+    if (result == null) {
+      System.out.println("it is empty");
+      return;
+    }
+    for (Double val : result.getEmbedding()) {
+      System.out.println(val);
     }
     System.out.println();
+    return;
   }
 }

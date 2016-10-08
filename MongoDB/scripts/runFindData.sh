@@ -1,1 +1,1 @@
-mvn exec:java -Dexec.mainClass="Doraemon.MongoDB.FindData"
+mvn exec:java -X -Dexec.mainClass="doraemon.mongoDB.FindData"
