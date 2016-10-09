@@ -22,12 +22,15 @@ import com.mongodb.client.MongoDatabase;
  */
 public class UploadData {
   private static String ENTITY_EMBEDDING = "./data/entity_embedding.txt";
-  private static String RELATION_EMBEDDING = "./data/relation_embedding.txt";
   private static String ENTITY_MAP = "./data/FB5M-entity-id.txt";
-  public static String RELATION_MAP = "./data/FB5M-relation-id.txt";
+  
+  private static String RELATION_EMBEDDING = "./data/relation_embedding.txt";
+  private static String RELATION_MAP = "./data/FB5M-relation-id.txt";
+  
+  private static String ENTITY_MID_NAME = "./data/entity_name_map.txt";
   
   public static Map<Integer, String> entity_id_map = new HashMap<Integer, String>();
-  public static Map<Integer, String> relation_id_map = new HashMap<Integer, String>();
+  public static Map<Integer, String> relation_id_map = new HashMap<Integer, String>();  
   
   public static void loadDict(String path, Map<Integer, String> id_map) throws IOException {
     File fin = new File(path);
@@ -79,10 +82,48 @@ public class UploadData {
     }
   }
   
+  public static void updateFreebaseEntityMIDName(
+      String db_name, String ct_name, String entity_mid_name_path) {
+    try {
+      MongoClient mongoClient = new MongoClient("localhost", 27017);
+
+      MongoDatabase mongoDatabase = mongoClient.getDatabase(db_name);
+      MongoCollection<Document> collection = mongoDatabase.getCollection(ct_name);
+      if (collection == null) {
+        mongoDatabase.createCollection(ct_name);
+        collection = mongoDatabase.getCollection(ct_name);
+      }
+
+      
+      File fin = new File(entity_mid_name_path);
+      BufferedReader reader = new BufferedReader(new FileReader(fin));
+      String line = null;
+      while ((line = reader.readLine()) != null) {
+        String[] tokens = line.trim().split("\t");
+        if (tokens.length != 2) {
+          continue;
+        }
+        String mid = tokens[0].trim();
+        String name = tokens[1].trim();
+
+        Document document = new Document("mid", mid);
+        document.append("name", name);
+        collection.insertOne(document);
+      }
+      reader.close();
+    } catch (Exception e) {
+      System.err.println(e.getClass().getName() + ": " + e.getMessage());
+    }
+  }
+  
+  
   public static void main(String[] args) throws IOException {
     loadDict(ENTITY_MAP, entity_id_map);
-    loadDict(RELATION_MAP, relation_id_map);
     updateFreebaseEmbedding("freebase", "entityEmbedding", ENTITY_EMBEDDING, entity_id_map);
+    
+    loadDict(RELATION_MAP, relation_id_map);
     updateFreebaseEmbedding("freebase", "relationEmbedding", RELATION_EMBEDDING, relation_id_map);
+    
+    updateFreebaseEntityMIDName("freebase", "entityMidName", ENTITY_MID_NAME);
   }
 }
